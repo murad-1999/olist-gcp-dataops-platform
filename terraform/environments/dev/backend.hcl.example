@@ -1,0 +1,5 @@
+# Backend configuration template
+# Copy this file to backend.hcl to configure your state bucket locally:
+# cp backend.hcl.example backend.hcl
+
+bucket = "data-pipeline-507907-tf-state"

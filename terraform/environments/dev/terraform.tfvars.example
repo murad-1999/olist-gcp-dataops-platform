@@ -1,0 +1,15 @@
+# Example Terraform variables for dev environment
+# Copy this file to terraform.tfvars and customize with your own values:
+# cp terraform.tfvars.example terraform.tfvars
+
+project_id      = "your-gcp-project-id"
+region          = "us-central1"
+environment     = "dev"
+raw_bucket_name = "your-gcp-project-id-raw-bronze"
+
+# Optional overrides (defaults provided in variables.tf)
+# silver_dataset_id                 = "olist_silver"
+# gold_dataset_id                   = "olist_gold"
+# noncurrent_version_retention_days = 7
+# force_destroy                     = false
+# delete_contents_on_destroy        = false

@@ -1,5 +1,5 @@
 google-cloud-secret-manager==2.16.2
 google-cloud-storage==2.10.0
-kaggle==1.5.16
+kaggle>=1.8.0
 flake8==6.1.0
 black==23.7.0

@@ -56,7 +56,7 @@ jobs:
           REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
         run: |
           cd terraform/environments/dev
-          terraform init -backend-config="bucket=${PROJECT_ID}-terraform-state" -reconfigure || terraform init -backend=false
+          terraform init -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -backend=false
           terraform apply -auto-approve \
             -var="docker_image=${REPO_URI}:${IMAGE_TAG}" \
             -var="github_repo=${{ github.repository }}"

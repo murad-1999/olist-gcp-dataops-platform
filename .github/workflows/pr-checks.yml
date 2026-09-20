@@ -69,7 +69,7 @@ jobs:
         if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT != '' }}
         run: |
           cd terraform/environments/dev
-          terraform init -backend-config="bucket=${PROJECT_ID}-terraform-state" -reconfigure || terraform init -backend=false
+          terraform init -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -backend=false
           terraform plan \
             -var="docker_image=us-central1-docker.pkg.dev/${PROJECT_ID}/olist-dataops-repo/ingestion:latest" \
             -var="github_repo=${{ github.repository }}"

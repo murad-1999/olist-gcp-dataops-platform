@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set environment variables to prevent Python from writing .pyc files
 # and to buffer stdout/stderr

@@ -17,15 +17,28 @@ def get_kaggle_credentials() -> dict:
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{PROJECT_ID}/secrets/{SECRET_ID}/versions/latest"
     response = client.access_secret_version(request={"name": name})
-    payload = response.payload.data.decode("UTF-8")
-    return json.loads(payload)
+    payload = response.payload.data.decode("UTF-8").strip()
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError:
+        return {"token": payload}
 
 
 def setup_kaggle_env():
-    """Set Kaggle environment variables from retrieved credentials."""
+    """Set Kaggle environment variables and files from retrieved credentials."""
     creds = get_kaggle_credentials()
-    os.environ["KAGGLE_USERNAME"] = creds.get("username", "")
-    os.environ["KAGGLE_KEY"] = creds.get("key", "")
+    if "token" in creds:
+        token = creds["token"]
+        os.environ["KAGGLE_API_TOKEN"] = token
+        kaggle_dir = os.path.expanduser("~/.kaggle")
+        os.makedirs(kaggle_dir, exist_ok=True)
+        token_file = os.path.join(kaggle_dir, "access_token")
+        with open(token_file, "w") as f:
+            f.write(token)
+        os.chmod(token_file, 0o600)
+    else:
+        os.environ["KAGGLE_USERNAME"] = creds.get("username", "")
+        os.environ["KAGGLE_KEY"] = creds.get("key", "")
 
 
 def download_dataset(download_path: str):

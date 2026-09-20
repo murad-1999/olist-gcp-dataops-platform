@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Fact table for all orders"
+    columns:
+      - name: order_id
+        description: "Primary key for the order"
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - not_null
+
+  - name: dim_customers
+    description: "Dimension table for unique customers"
+    columns:
+      - name: customer_unique_id
+        description: "Primary key for the customer"
+        tests:
+          - unique
+          - not_null

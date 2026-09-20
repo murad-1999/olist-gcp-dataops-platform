@@ -56,8 +56,10 @@ jobs:
           REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
         run: |
           cd terraform/environments/dev
-          terraform init -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -backend=false
-          terraform apply -auto-approve \
+          terraform init -input=false -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -input=false -backend=false
+          terraform apply -input=false -auto-approve \
+            -var="project_id=${PROJECT_ID}" \
+            -var="raw_bucket_name=${PROJECT_ID}-raw-bronze" \
             -var="docker_image=${REPO_URI}:${IMAGE_TAG}" \
             -var="github_repo=${{ github.repository }}"
 

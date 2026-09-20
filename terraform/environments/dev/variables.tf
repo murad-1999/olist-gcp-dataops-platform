@@ -1,6 +1,7 @@
 variable "project_id" {
   description = "The GCP Project ID where resources will be provisioned."
   type        = string
+  default     = "olist-dataops-73908"
 }
 
 variable "region" {
@@ -18,6 +19,7 @@ variable "environment" {
 variable "raw_bucket_name" {
   description = "Globally unique name for the raw GCS landing bucket (Bronze layer)."
   type        = string
+  default     = "olist-dataops-73908-raw-bronze"
 }
 
 variable "silver_dataset_id" {

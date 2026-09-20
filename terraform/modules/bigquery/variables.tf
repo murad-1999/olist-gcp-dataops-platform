@@ -10,6 +10,17 @@ variable "location" {
   default     = "us-central1"
 }
 
+variable "bronze_dataset_id" {
+  description = "Unique dataset ID for the raw landing data (Bronze layer)."
+  type        = string
+  default     = "olist_bronze"
+}
+
+variable "raw_bucket_name" {
+  description = "The name of the raw GCS bucket containing ingested CSVs."
+  type        = string
+}
+
 variable "silver_dataset_id" {
   description = "Unique dataset ID for the staging/cleaned data (Silver layer)."
   type        = string

@@ -33,3 +33,16 @@ terraform.rc
 *~
 .idea/
 .vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+env/
+
+# dbt
+dbt_olist/target/
+dbt_olist/dbt_packages/
+dbt_olist/logs/

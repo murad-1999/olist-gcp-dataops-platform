@@ -1,0 +1,84 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'olist-dataops-73908' }}
+  REGION: us-central1
+  ARTIFACT_REPO: olist-dataops-repo
+
+jobs:
+  build-deploy-transform:
+    name: Build, Deploy & Transform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP via WIF
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          export_environment_variables: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker authentication
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
+        run: |
+          docker build -t "${REPO_URI}:${IMAGE_TAG}" -t "${REPO_URI}:latest" ./ingestion
+          docker push "${REPO_URI}:${IMAGE_TAG}"
+          docker push "${REPO_URI}:latest"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: Terraform Apply
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
+        run: |
+          cd terraform/environments/dev
+          terraform init -backend-config="bucket=${PROJECT_ID}-terraform-state" -reconfigure || terraform init -backend=false
+          terraform apply -auto-approve \
+            -var="docker_image=${REPO_URI}:${IMAGE_TAG}" \
+            -var="github_repo=${{ github.repository }}"
+
+      - name: Set up Python for dbt
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install dbt-bigquery
+        run: |
+          python -m pip install --upgrade pip
+          pip install dbt-bigquery
+
+      - name: Run dbt models (Silver & Gold)
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+        run: |
+          dbt run --project-dir dbt_olist --profiles-dir dbt_olist
+
+      - name: Run dbt tests
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+        run: |
+          dbt test --project-dir dbt_olist --profiles-dir dbt_olist

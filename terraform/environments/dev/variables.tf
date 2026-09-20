@@ -49,3 +49,13 @@ variable "delete_contents_on_destroy" {
   type        = bool
   default     = false
 }
+
+variable "github_repo" {
+  description = "GitHub repository (e.g. murad-1999/olist-gcp-dataops-platform)"
+  type        = string
+}
+
+variable "docker_image" {
+  description = "The container image to deploy to Cloud Run"
+  type        = string
+}

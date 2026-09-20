@@ -1,8 +1,11 @@
-import os
 import json
+import os
+import sys
 import tempfile
-from google.cloud import secretmanager
-from google.cloud import storage
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from google.cloud import secretmanager, storage
+
 PROJECT_ID = os.environ.get("PROJECT_ID")
 SECRET_ID = os.environ.get("SECRET_ID", "kaggle_api_key")
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "olist-dataops-73908-raw-bronze")
@@ -70,5 +73,39 @@ def main():
     print("Ingestion complete.")
 
 
+class IngestionHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        try:
+            print("Received trigger request. Starting ingestion...")
+            main()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "success", "message": "Ingestion completed"}\n')
+        except Exception as e:
+            print(f"Ingestion failed: {e}", file=sys.stderr)
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(f'{{"status": "error", "message": "{str(e)}"}}\n'.encode("utf-8"))
+
+    def do_GET(self):
+        # Health check endpoint for Cloud Run
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"OK\n")
+
+
+def run_server():
+    port = int(os.environ.get("PORT", "8080"))
+    server = HTTPServer(("0.0.0.0", port), IngestionHandler)
+    print(f"Ingestion service listening on port {port}...")
+    server.serve_forever()
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "--cli":
+        main()
+    else:
+        run_server()

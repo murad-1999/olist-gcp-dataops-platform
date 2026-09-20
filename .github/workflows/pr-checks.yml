@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 env:
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'olist-dataops-73908' }}
+  PROJECT_ID: olist-dataops-73908
   REGION: us-central1
 
 jobs:
@@ -39,6 +39,9 @@ jobs:
   terraform-checks:
     name: Terraform Format & Validation
     runs-on: ubuntu-latest
+    env:
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,14 +62,14 @@ jobs:
           terraform validate
 
       - name: Authenticate to GCP via WIF
-        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT != '' }}
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
 
       - name: Terraform Plan
-        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT != '' }}
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         run: |
           cd terraform/environments/dev
           terraform init -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -backend=false
@@ -77,6 +80,9 @@ jobs:
   dbt-checks:
     name: dbt Validation
     runs-on: ubuntu-latest
+    env:
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,15 +104,15 @@ jobs:
           dbt parse --project-dir dbt_olist --profiles-dir dbt_olist
 
       - name: Authenticate to GCP via WIF
-        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT != '' }}
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
           export_environment_variables: true
 
       - name: dbt Compile
-        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT != '' }}
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         env:
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
         run: |

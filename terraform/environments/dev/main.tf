@@ -25,6 +25,7 @@ module "bigquery" {
 
   project_id                 = var.project_id
   location                   = var.region
+  raw_bucket_name            = var.raw_bucket_name
   silver_dataset_id          = var.silver_dataset_id
   gold_dataset_id            = var.gold_dataset_id
   delete_contents_on_destroy = var.delete_contents_on_destroy

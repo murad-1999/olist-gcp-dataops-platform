@@ -19,7 +19,7 @@ models:
   dbt_olist:
     staging:
       +materialized: view
-      +dataset: olist_silver
+      +schema: olist_silver
     marts:
       +materialized: table
-      +dataset: olist_gold
+      +schema: olist_gold

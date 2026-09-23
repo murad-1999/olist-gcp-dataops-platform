@@ -11,3 +11,4 @@ SELECT
     TRIM(product_category_name_english) AS product_category_name_english
 FROM raw_translation
 WHERE product_category_name IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY product_category_name ORDER BY product_category_name_english) = 1

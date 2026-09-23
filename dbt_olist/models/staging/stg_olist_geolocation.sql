@@ -8,8 +8,8 @@ WITH raw_geolocation AS (
 
 SELECT
     CAST(geolocation_zip_code_prefix AS INT64) AS geolocation_zip_code_prefix,
-    CAST(geolocation_lat AS FLOAT64) AS geolocation_lat,
-    CAST(geolocation_lng AS FLOAT64) AS geolocation_lng,
+    CAST(geolocation_lat AS FLOAT64) AS geolocation_latitude,
+    CAST(geolocation_lng AS FLOAT64) AS geolocation_longitude,
     LOWER(TRIM(geolocation_city)) AS geolocation_city,
     UPPER(TRIM(geolocation_state)) AS geolocation_state
 FROM raw_geolocation

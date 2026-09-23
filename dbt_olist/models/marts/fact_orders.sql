@@ -51,9 +51,7 @@ SELECT
     COALESCE(i.total_order_items_value, 0.0) AS total_order_items_value,
     COALESCE(i.total_freight_value, 0.0) AS total_freight_value,
     COALESCE(p.total_payment_value, 0.0) AS total_payment_value,
-    COALESCE(p.max_payment_installments, 1) AS max_payment_installments,
-    c.customer_city,
-    c.customer_state
+    COALESCE(p.max_payment_installments, 1) AS max_payment_installments
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id
 LEFT JOIN order_items_agg i ON o.order_id = i.order_id

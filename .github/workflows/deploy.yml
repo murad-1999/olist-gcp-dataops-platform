@@ -9,20 +9,18 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'olist-dataops-73908' }}
-  REGION: us-central1
-  ARTIFACT_REPO: olist-dataops-repo
-
 jobs:
-  build-deploy-transform:
+  deploy-and-transform:
     name: Build, Deploy & Transform
     runs-on: ubuntu-latest
+    env:
+      REGION: us-central1
+      ARTIFACT_REPO: olist-dataops-repo
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP via WIF
+      - name: Authenticate to GCP via Workload Identity Federation
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -37,11 +35,21 @@ jobs:
         with:
           terraform_version: "1.5.7"
 
-      - name: Provision Artifact Registry
+      - name: Terraform Init
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           cd terraform/environments/dev
-          terraform init -input=false -backend-config="bucket=${PROJECT_ID}-tf-state" -reconfigure || terraform init -input=false -backend=false
+          terraform init -input=false -backend-config="bucket=${GCP_PROJECT_ID}-tf-state" -reconfigure
+
+      - name: Provision Artifact Registry
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          cd terraform/environments/dev
           terraform apply -target=module.artifact_registry -auto-approve -input=false \
+            -var="project_id=${GCP_PROJECT_ID}" \
+            -var="raw_bucket_name=${GCP_PROJECT_ID}-raw-landing" \
             -var="docker_image=dummy" \
             -var="github_repo=${{ github.repository }}"
 
@@ -49,22 +57,26 @@ jobs:
         run: |
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
-      - name: Build and Push Docker image
+      - name: Build and Push Docker image to Artifact Registry
         env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           IMAGE_TAG: ${{ github.sha }}
-          REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
         run: |
+          REPO_URI="${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/ingestion"
           docker build -t "${REPO_URI}:${IMAGE_TAG}" -t "${REPO_URI}:latest" ./ingestion
           docker push "${REPO_URI}:${IMAGE_TAG}"
           docker push "${REPO_URI}:latest"
 
       - name: Terraform Apply (Full Platform)
         env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           IMAGE_TAG: ${{ github.sha }}
-          REPO_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/ingestion
         run: |
+          REPO_URI="${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPO}/ingestion"
           cd terraform/environments/dev
           terraform apply -input=false -auto-approve \
+            -var="project_id=${GCP_PROJECT_ID}" \
+            -var="raw_bucket_name=${GCP_PROJECT_ID}-raw-landing" \
             -var="docker_image=${REPO_URI}:${IMAGE_TAG}" \
             -var="github_repo=${{ github.repository }}"
 
@@ -78,14 +90,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install dbt-bigquery
 
+      - name: dbt Dependencies
+        run: |
+          dbt deps --project-dir dbt_olist --profiles-dir dbt_olist
+
       - name: Run dbt models (Silver & Gold)
         env:
-          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           dbt run --project-dir dbt_olist --profiles-dir dbt_olist
 
       - name: Run dbt tests
         env:
-          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           dbt test --project-dir dbt_olist --profiles-dir dbt_olist

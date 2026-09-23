@@ -13,3 +13,4 @@ SELECT
     UPPER(TRIM(seller_state)) AS seller_state
 FROM raw_sellers
 WHERE seller_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY seller_id ORDER BY seller_city) = 1

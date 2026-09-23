@@ -1,0 +1,110 @@
+version: 2
+
+models:
+  # Dimension Tables
+  - name: dim_customers
+    description: "Dimension table representing customers with location attributes. Clustered by customer_id."
+    columns:
+      - name: customer_id
+        description: "Primary key for customer entity"
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: "Unique identifier representing the physical person"
+        tests:
+          - not_null
+
+  - name: dim_sellers
+    description: "Dimension table representing merchants and sellers. Clustered by seller_id."
+    columns:
+      - name: seller_id
+        description: "Primary key for seller entity"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    description: "Dimension table representing products with category translations and physical specs. Clustered by product_id."
+    columns:
+      - name: product_id
+        description: "Primary key for product entity"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_geolocation
+    description: "Dimension table representing geographical centroids by postal code prefix. Clustered by geolocation_zip_code_prefix."
+    columns:
+      - name: geolocation_zip_code_prefix
+        description: "Primary key - five-digit zip code prefix"
+        tests:
+          - unique
+          - not_null
+
+  # Fact Tables
+  - name: fact_orders
+    description: "Fact table containing order level transactions, metrics, and timestamps. Partitioned by order_purchase_timestamp and clustered by customer_id."
+    columns:
+      - name: order_id
+        description: "Primary key for the order"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+  - name: fact_order_payments
+    description: "Fact table containing individual payment lines per order. Partitioned by order_purchase_timestamp and clustered by order_id."
+    columns:
+      - name: payment_id
+        description: "Composite surrogate primary key (order_id + payment_sequential)"
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "Foreign key to fact_orders"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fact_orders')
+              field: order_id
+      - name: customer_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+  - name: fact_order_reviews
+    description: "Fact table containing customer satisfaction reviews per order. Partitioned by order_purchase_timestamp and clustered by order_id."
+    columns:
+      - name: review_order_id
+        description: "Composite surrogate primary key (review_id + order_id)"
+        tests:
+          - unique
+          - not_null
+      - name: review_id
+        description: "Review identifier"
+        tests:
+          - not_null
+      - name: order_id
+        description: "Foreign key to fact_orders"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fact_orders')
+              field: order_id
+      - name: customer_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id

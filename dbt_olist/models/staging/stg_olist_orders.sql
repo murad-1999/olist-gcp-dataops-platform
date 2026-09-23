@@ -17,3 +17,4 @@ SELECT
     CAST(order_estimated_delivery_date AS TIMESTAMP) AS order_estimated_delivery_date
 FROM raw_orders
 WHERE order_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_purchase_timestamp DESC) = 1

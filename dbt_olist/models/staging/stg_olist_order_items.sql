@@ -17,3 +17,4 @@ SELECT
 FROM raw_order_items
 WHERE order_id IS NOT NULL 
   AND order_item_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, order_item_id ORDER BY shipping_limit_date DESC) = 1

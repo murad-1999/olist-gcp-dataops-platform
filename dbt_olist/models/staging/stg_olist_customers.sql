@@ -9,8 +9,9 @@ WITH raw_customers AS (
 SELECT
     customer_id,
     customer_unique_id,
-    customer_zip_code_prefix,
-    customer_city,
-    customer_state
+    CAST(customer_zip_code_prefix AS INT64) AS customer_zip_code_prefix,
+    TRIM(customer_city) AS customer_city,
+    UPPER(TRIM(customer_state)) AS customer_state
 FROM raw_customers
 WHERE customer_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY customer_city) = 1

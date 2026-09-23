@@ -14,3 +14,5 @@ SELECT
     CAST(payment_value AS FLOAT64) AS payment_value
 FROM raw_order_payments
 WHERE order_id IS NOT NULL
+  AND payment_sequential IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, payment_sequential ORDER BY payment_value DESC) = 1

@@ -61,6 +61,145 @@ resource "google_bigquery_table" "raw_customers" {
   }
 }
 
+resource "google_bigquery_table" "raw_order_items" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_order_items"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_order_items_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_order_payments" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_order_payments"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_order_payments_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_order_reviews" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_order_reviews"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_order_reviews_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_products" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_products"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_products_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_sellers" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_sellers"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_sellers_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_geolocation" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_geolocation"
+  project             = var.project_id
+  deletion_protection = false
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/olist_geolocation_dataset.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
+resource "google_bigquery_table" "raw_product_category_name_translation" {
+  dataset_id          = google_bigquery_dataset.bronze.dataset_id
+  table_id            = "raw_product_category_name_translation"
+  project             = var.project_id
+  deletion_protection = false
+
+  schema = jsonencode([
+    {
+      name = "product_category_name"
+      type = "STRING"
+      mode = "NULLABLE"
+    },
+    {
+      name = "product_category_name_english"
+      type = "STRING"
+      mode = "NULLABLE"
+    }
+  ])
+
+  external_data_configuration {
+    autodetect    = false
+    source_format = "CSV"
+    source_uris   = ["gs://${var.raw_bucket_name}/product_category_name_translation.csv"]
+    csv_options {
+      quote                 = "\""
+      allow_quoted_newlines = true
+      skip_leading_rows     = 1
+    }
+  }
+}
+
 resource "google_bigquery_dataset" "silver" {
   dataset_id                 = var.silver_dataset_id
   friendly_name              = "Olist Silver"

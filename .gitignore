@@ -44,3 +44,4 @@ env/
 dbt_olist/target/
 dbt_olist/dbt_packages/
 dbt_olist/logs/
+dbt_olist/.user.yml

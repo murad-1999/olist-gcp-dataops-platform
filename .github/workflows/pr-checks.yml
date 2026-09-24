@@ -10,6 +10,12 @@ permissions:
   id-token: write
   pull-requests: write
 
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || vars.GCP_PROJECT_ID || 'olist-dataops-73908' }}
+  REGION: us-central1
+  WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
 jobs:
   python-lint:
     name: Python Linting (flake8)
@@ -49,20 +55,18 @@ jobs:
           terraform fmt -check -recursive terraform/
 
       - name: Authenticate to GCP via Workload Identity Federation
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
 
       - name: Terraform Init & Plan
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         run: |
           cd terraform/environments/dev
-          terraform init -input=false -backend-config="bucket=${GCP_PROJECT_ID}-tf-state" -reconfigure
+          terraform init -input=false -backend-config="bucket=${GCP_PROJECT_ID}-tf-state" -reconfigure || terraform init -input=false -backend=false
           terraform plan -input=false \
-            -var="project_id=${GCP_PROJECT_ID}" \
-            -var="raw_bucket_name=${GCP_PROJECT_ID}-raw-landing" \
             -var="docker_image=us-central1-docker.pkg.dev/${GCP_PROJECT_ID}/olist-dataops-repo/ingestion:latest" \
             -var="github_repo=${{ github.repository }}"
 
@@ -83,11 +87,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install dbt-bigquery
 
+      - name: dbt Parse (Syntax & Jinja check)
+        env:
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+        run: |
+          dbt parse --project-dir dbt_olist --profiles-dir dbt_olist
+
       - name: Authenticate to GCP via Workload Identity Federation
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
           export_environment_variables: true
 
       - name: dbt Dependencies
@@ -95,7 +106,8 @@ jobs:
           dbt deps --project-dir dbt_olist --profiles-dir dbt_olist
 
       - name: dbt Compile
+        if: env.WIF_PROVIDER != '' && env.WIF_SA != ''
         env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
         run: |
           dbt compile --project-dir dbt_olist --profiles-dir dbt_olist

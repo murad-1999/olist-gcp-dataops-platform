@@ -56,8 +56,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dim_customers')
-              field: customer_id
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
 
   - name: fact_order_payments
     description: "Fact table containing individual payment lines per order. Partitioned by order_purchase_timestamp and clustered by order_id."
@@ -72,15 +73,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('fact_orders')
-              field: order_id
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
       - name: customer_id
         description: "Foreign key to dim_customers"
         tests:
           - not_null
           - relationships:
-              to: ref('dim_customers')
-              field: customer_id
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
 
   - name: fact_order_reviews
     description: "Fact table containing customer satisfaction reviews per order. Partitioned by order_purchase_timestamp and clustered by order_id."
@@ -99,12 +102,14 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('fact_orders')
-              field: order_id
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
       - name: customer_id
         description: "Foreign key to dim_customers"
         tests:
           - not_null
           - relationships:
-              to: ref('dim_customers')
-              field: customer_id
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id

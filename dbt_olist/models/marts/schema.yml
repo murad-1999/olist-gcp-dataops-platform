@@ -113,3 +113,53 @@ models:
               arguments:
                 to: ref('dim_customers')
                 field: customer_id
+
+  - name: fact_order_items
+    description: "Fact table containing individual item line transactions per order. Partitioned by order_purchase_timestamp and clustered by product_id and seller_id."
+    columns:
+      - name: order_item_key
+        description: "Composite surrogate primary key (order_id + order_item_id)"
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "Foreign key to fact_orders"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
+      - name: customer_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: product_id
+        description: "Foreign key to dim_products"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: seller_id
+        description: "Foreign key to dim_sellers"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_id
+      - name: price
+        description: "Item selling price"
+        tests:
+          - not_null
+      - name: freight_value
+        description: "Item freight / shipping cost"
+        tests:
+          - not_null
+

@@ -71,3 +71,12 @@ module "cloud_scheduler" {
   service_uri           = module.cloud_run.service_uri
   service_account_email = module.iam.scheduler_sa_email
 }
+
+module "budget" {
+  count  = var.billing_account_id != null && var.billing_account_id != "" ? 1 : 0
+  source = "../../modules/budget"
+
+  billing_account_id = var.billing_account_id
+  project_id         = var.project_id
+}
+

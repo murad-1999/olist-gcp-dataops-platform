@@ -59,3 +59,10 @@ variable "docker_image" {
   description = "The container image to deploy to Cloud Run"
   type        = string
 }
+
+variable "billing_account_id" {
+  description = "The ID of the GCP Billing Account to attach the zero-cost budget alert. Optional; if not set, budget alert provisioning is skipped."
+  type        = string
+  default     = null
+}
+

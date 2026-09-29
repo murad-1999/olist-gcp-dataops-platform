@@ -32,3 +32,9 @@ output "cloud_run_service_uri" {
   description = "The URI of the Cloud Run ingestion service."
   value       = module.cloud_run.service_uri
 }
+
+output "budget_name" {
+  description = "The resource name of the billing budget if provisioned."
+  value       = try(module.budget[0].budget_name, null)
+}
+

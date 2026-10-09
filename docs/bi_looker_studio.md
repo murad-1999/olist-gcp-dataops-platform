@@ -59,20 +59,20 @@ Add these calculated fields directly inside your Looker Studio Data Sources:
 ### Logistics & SLA Adherence Metrics
 | Metric Name | Formula / Definition | Type |
 | :--- | :--- | :--- |
-| **Actual Delivery Duration (Days)** | `DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY)` | Numeric |
-| **Estimated Delivery Duration (Days)**| `DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY)` | Numeric |
-| **Carrier Transit Duration (Days)** | `DATE_DIFF(order_delivered_customer_date, order_delivered_carrier_date, DAY)` | Numeric |
-| **Delivery Delay vs Estimate (Days)**| `DATE_DIFF(order_delivered_customer_date, order_estimated_delivery_date, DAY)` | Numeric |
+| **Actual Delivery Duration (Days)** | `DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp)` | Numeric |
+| **Estimated Delivery Duration (Days)**| `DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp)` | Numeric |
+| **Carrier Transit Duration (Days)** | `DATE_DIFF(order_delivered_customer_date, order_delivered_carrier_date)` | Numeric |
+| **Delivery Delay vs Estimate (Days)**| `DATE_DIFF(order_delivered_customer_date, order_estimated_delivery_date)` | Numeric |
 | **Delivery Status Flag** | `CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN "On Time" ELSE "Delayed" END` | Text |
-| **On-Time Delivery Rate (%)** | `COUNT(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 END) / COUNT(order_id)` | Percent |
+| **On-Time Delivery Rate (%)** | `SUM(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(order_id)` | Percent |
 
 ### Customer Experience & Sentiment Metrics
 | Metric Name | Formula / Definition | Type |
 | :--- | :--- | :--- |
 | **Average CSAT / Review Score** | `AVG(review_score)` | Numeric (2 decimals) |
-| **Positive Reviews (4-5 Stars)** | `COUNT(CASE WHEN review_score >= 4 THEN 1 END)` | Numeric |
-| **Negative Reviews (1-2 Stars)** | `COUNT(CASE WHEN review_score <= 2 THEN 1 END)` | Numeric |
-| **Net Customer Satisfaction Index** | `(COUNT(CASE WHEN review_score >= 4 THEN 1 END) - COUNT(CASE WHEN review_score <= 2 THEN 1 END)) / COUNT(review_id)` | Percent |
+| **Positive Reviews (4-5 Stars)** | `SUM(CASE WHEN review_score >= 4 THEN 1 ELSE 0 END)` | Numeric |
+| **Negative Reviews (1-2 Stars)** | `SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END)` | Numeric |
+| **Net Customer Satisfaction Index** | `(SUM(CASE WHEN review_score >= 4 THEN 1 ELSE 0 END) - SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END)) / COUNT(review_id)` | Percent |
 
 ---
 
